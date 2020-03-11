@@ -1,0 +1,90 @@
+---
+title: "Fish TP"
+author: "Anna Radchenko"
+date: "February 16, 2020"
+output: html_document
+---
+```{r}
+Cage.Mass <- read.csv("~/Theses Pieces/Tank Pad Pilot Study/Cage Mass.csv")
+```
+
+```{r}
+mass <- aov(Cage.Mass$Mass ~ Cage.Mass$ï..Tank)
+summary(mass)
+```
+
+```{r}
+mass1 <- aov(Cage.Mass$Mass ~ Cage.Mass$ï..Tank * as.factor(Cage.Mass$Date))
+summary(mass1)
+```
+
+```{r}
+height <- read.csv("~/Theses Pieces/Tank Pad Pilot Study/Tank Height.csv")
+```
+
+```{r}
+h <- aov(height$Height ~ height$ï..Tank*as.factor(height$Date))
+summary(h)
+
+```
+
+
+```{r}
+gill <- read.csv("~/Theses Pieces/Tank Pad Pilot Study/Gill Samples Metrics.csv")
+```
+
+```{r}
+mass <- aov(gill$Weight ~ gill$Tank*gill$Date)
+summary(mass)
+```
+
+```{r}
+mass1 <- aov(Weight ~ Tank + Cage %in% Tank, data = gill)
+summary(mass1)
+```
+
+```{r}
+length <- aov(Length ~ Tank*Date, data = gill)
+summary(length)
+TukeyHSD(length)
+```
+
+```{r}
+length1 <- aov(Length ~ Tank + Cage %in% Tank, data = gill)
+summary(length1)
+```
+
+```{r}
+Chla <- read.csv("~/Theses Pieces/Tank Pad Pilot Study/Post.Chla.csv")
+```
+
+```{r}
+chl1 <- aov(Chla$Chla ~ as.factor(Chla$Time), subset = Chla$Tank == 'L1')
+summary (chl1)
+TukeyHSD(chl1)
+```
+
+```{r}
+chl2 <- aov(Chla$Chla ~ as.factor(Chla$Time), subset = Chla$Tank == 'L2')
+summary (chl2)
+TukeyHSD(chl2)
+```
+
+```{r}
+chl4 <- aov(Chla$Chla ~ as.factor(Chla$Time), subset = Chla$Tank == 'L4')
+summary (chl4)
+TukeyHSD(chl4)
+```
+
+
+```{r}
+chl <- aov(Chla$Chla ~ as.factor(Chla$Tank), subset = Chla$Time == '0')
+summary(chl)
+TukeyHSD(chl)
+```
+
+```{r}
+plot(Chla$Chla ~ Chla$Time, subset = Chla$Tank == 'L1', type = "o", col ='red')
+lines(Chla$Chla~ Chla$Time, subset = Chla$Tank == 'L2', type = "o", col = "blue)
+```
+
