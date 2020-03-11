@@ -1,0 +1,94 @@
+---
+title: "Path Analysis"
+author: "Anna Radchenko"
+date: "March 1, 2020"
+output: html_document
+---
+```{r}
+library(lavaan)
+library(semPlot)
+library(OpenMx)
+library(tidyverse)
+library(knitr)
+library(kableExtra)
+library(GGally)
+library (caret)
+```
+
+
+```{r}
+data <- read.csv("~/Theses Pieces/Tank Pad Pilot Study/FakeDataSet.csv")
+```
+
+```{r}
+training.samples <- data$P.Total.Mortality %>%    createDataPartition(p = 0.8, list = FALSE)
+train.data <- data[training.samples, ]
+test.data <- data[-training.samples, ]
+```
+
+
+
+
+```{r}
+model1 <- lm(P.Total.Mortality ~ Turnover + Time + Chla + TOC + Ozone + Max.DO + Salinity + pH + Temp + Turbidity + ORP + Height, data = data)
+
+predictions <- model1 %>% predict(test.data)
+data.frame (
+  RMSE = RMSE(predictions, test.data$P.Total.Mortality),
+  R2 = R2(predictions, test.data$P.Total.Mortality)
+)
+
+```
+
+```{r}
+car::vif(model1)
+```
+
+
+
+
+
+```{r}
+model <- '
+
+P.Total.Mortality ~ Turnover + Time + Max.DO + Salinity + pH + Temp + Turbidity + Chla + Secchi + TOC
+
+Chla ~~ Secchi + Ammonia + Height + Nitrite + Nitrate
+
+
+'
+```
+
+
+
+
+
+```{r}
+varTable(fit)
+```
+
+
+```{r}
+fit <- cfa(model, data = data)
+```
+
+
+```{r}
+myNames <- lavNames(sem(model))
+myData <- data[myNames]
+myData <- myData[complete.cases(myData), ]
+myCov <- cov(myData)
+round(myCov, 2)
+##check whether any correlations are perfect (ie. any colinearity)
+myCor <- cov2cor(myCov)
+noDiag <- myCor
+diag(noDiag) <- 0
+any(noDiag == 1)
+## if not, check for multicollinearity (ie. is one variable a linear combination of 2+ variables?)
+det(myCov) < 0
+## or 
+any(eigen(myCov)$values < 0)
+```
+```
+
+
