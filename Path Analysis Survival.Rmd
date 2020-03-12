@@ -17,26 +17,25 @@ library (caret)
 
 
 ```{r}
-data <- read.csv("~/Theses Pieces/Tank Pad Pilot Study/FakeDataSet.csv")
+gill <- read.csv("~/Theses Pieces/Tank Pad Pilot Study/GillFakeDataSet.csv")
 ```
 
 ```{r}
-training.samples <- data$P.Total.Mortality %>%    createDataPartition(p = 0.8, list = FALSE)
+training.samples <- gill$Gill.Score %>%    createDataPartition(p = 0.8, list = FALSE)
 train.data <- data[training.samples, ]
 test.data <- data[-training.samples, ]
 ```
 
 
+```{r}
+summary(lm(Gill.Score ~ Treatment + Chla, data = gill))
+```
 
 
 ```{r}
-model1 <- lm(P.Total.Mortality ~ Turnover + Time + Chla + TOC + Ozone + Max.DO + Salinity + pH + Temp + Turbidity + ORP + Height, data = data)
-
-predictions <- model1 %>% predict(test.data)
-data.frame (
-  RMSE = RMSE(predictions, test.data$P.Total.Mortality),
-  R2 = R2(predictions, test.data$P.Total.Mortality)
-)
+model1 <- lm(Gill.Score ~ gill$Treatment + Condition.Factor + Chla + DO + Max.DO + Salinity + pH + Temp + Secchi, data = gill)
+shapiro.test(residuals(model1))
+summary(model1)
 
 ```
 
@@ -51,9 +50,9 @@ car::vif(model1)
 ```{r}
 model <- '
 
-P.Total.Mortality ~ Turnover + Time + Max.DO + Salinity + pH + Temp + Turbidity + Chla + Secchi + TOC
+Gill.Score ~ Treatment + Time + Max.DO + Salinity + pH + Temp + Chla + Secchi
 
-Chla ~~ Secchi + Ammonia + Height + Nitrite + Nitrate
+Chla ~~ Secchi + Ammonia + Height + Nitrite + Nitrate + Temp
 
 
 '
@@ -64,12 +63,8 @@ Chla ~~ Secchi + Ammonia + Height + Nitrite + Nitrate
 
 
 ```{r}
-varTable(fit)
-```
-
-
-```{r}
 fit <- cfa(model, data = data)
+varTable(fit)
 ```
 
 
