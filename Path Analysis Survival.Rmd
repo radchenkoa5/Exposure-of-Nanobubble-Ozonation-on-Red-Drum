@@ -28,12 +28,19 @@ test.data <- data[-training.samples, ]
 
 
 ```{r}
-summary(lm(Gill.Score ~ Treatment + Chla, data = gill))
+plot(Gill.Score ~ Treatment, data = gill)
 ```
 
 
 ```{r}
-model1 <- lm(Gill.Score ~ gill$Treatment + Condition.Factor + Chla + DO + Max.DO + Salinity + pH + Temp + Secchi, data = gill)
+treatonly <- (lm(Gill.Score ~ Treatment, data = gill))
+summary(treatonly)
+shapiro.test(residuals(treatonly))
+```
+
+
+```{r}
+model1 <- lm(Gill.Score ~ Treatment + Condition.Factor + Chla + DO + Max.DO + Salinity + pH + Temp + Secchi, data = gill)
 shapiro.test(residuals(model1))
 summary(model1)
 
@@ -43,6 +50,9 @@ summary(model1)
 car::vif(model1)
 ```
 
+```{r}
+gill.na <- na.omit(gill)
+```
 
 
 
@@ -50,9 +60,11 @@ car::vif(model1)
 ```{r}
 model <- '
 
-Gill.Score ~ Treatment + Time + Max.DO + Salinity + pH + Temp + Chla + Secchi
+Gill.Score ~ Treatment + DO + Max.DO + Salinity + pH + Temp + Chla + Condition.Factor
 
 Chla ~~ Secchi + Ammonia + Height + Nitrite + Nitrate + Temp
+Max.DO ~~ Treatment + Temp
+Treatment ~~ Chla + pH + Temp + Salinity
 
 
 '
@@ -63,8 +75,9 @@ Chla ~~ Secchi + Ammonia + Height + Nitrite + Nitrate + Temp
 
 
 ```{r}
-fit <- cfa(model, data = data)
+fit <- cfa(model, data = gill.na)
 varTable(fit)
+summary(fit)
 ```
 
 
