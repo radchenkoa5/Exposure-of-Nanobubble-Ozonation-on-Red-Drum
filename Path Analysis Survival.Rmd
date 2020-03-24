@@ -18,33 +18,58 @@ library (caret)
 
 ```{r}
 gill <- read.csv("~/Theses Pieces/Tank Pad Pilot Study/GillFakeDataSet.csv")
-```
-
-```{r}
-training.samples <- gill$Gill.Score %>%    createDataPartition(p = 0.8, list = FALSE)
-train.data <- data[training.samples, ]
-test.data <- data[-training.samples, ]
-```
-
-
-```{r}
-plot(Gill.Score ~ Treatment, data = gill)
+gill$TreatmentF <- factor(gill$Treatment)
+gill$TankF <- factor(gill$Tank)
+gill$CageF <- factor(gill$Cage)
+gill$DateF <- factor(gill$Date)
 ```
 
 
+
+
 ```{r}
-treatonly <- (lm(Gill.Score ~ Treatment, data = gill))
+plot(Gill.Score ~ TreatmentF, data = gill)
+```
+
+
+```{r}
+treatonly <- (lm(Gill.Score ~ as.factor(Treatment), data = gill))
 summary(treatonly)
 shapiro.test(residuals(treatonly))
 ```
 
+```{r}
+tonly <- aov(Gill.Score ~ as.factor(Treatment), data = gill)
+summary(tonly)
+TukeyHSD(tonly)
+```
+
+
+
+
+
 
 ```{r}
-model1 <- lm(Gill.Score ~ Treatment + Condition.Factor + Chla + DO + Max.DO + Salinity + pH + Temp + Secchi, data = gill)
+model1 <- lm(Gill.Score ~ TreatmentF + Condition.Factor + Chla + DO + Max.DO + Salinity + pH + Temp, data = gill)
 shapiro.test(residuals(model1))
 summary(model1)
 
 ```
+
+```{r}
+fit <- lm(model1)
+ld.vars <- attributes(alias(fit)$Complete)$dimnames[[1]]
+ld.vars
+```
+
+
+
+
+```{r}
+model2 <- lm(Gill.Score ~ Treatment + Temp, data = gill)
+summary(model2)
+```
+
 
 ```{r}
 car::vif(model1)
@@ -52,19 +77,27 @@ car::vif(model1)
 
 ```{r}
 gill.na <- na.omit(gill)
+gill.na <- data.frame(gill.na)
+gill.na$TreatmentF <- gill.na$Treatment
 ```
 
+```{r}
+gill.na[,c(1,
+        2,
+        "item3",
+        "item4")] <-
+    lapply(Data[,c("item1",
+                   "item2",
+                   "item3",
+                   "item4")], ordered)
+```
 
 
 
 ```{r}
 model <- '
 
-Gill.Score ~ Treatment + DO + Max.DO + Salinity + pH + Temp + Chla + Condition.Factor
-
-Chla ~~ Secchi + Ammonia + Height + Nitrite + Nitrate + Temp
-Max.DO ~~ Treatment + Temp
-Treatment ~~ Chla + pH + Temp + Salinity
+Gill.Score ~ Treatment + Condition.Factor + Max.DO + Chla + pH + Salinity + Height + Temp
 
 
 '
@@ -75,28 +108,15 @@ Treatment ~~ Chla + pH + Temp + Salinity
 
 
 ```{r}
-fit <- cfa(model, data = gill.na)
+fit <- cfa(model, data = gill)
 varTable(fit)
 summary(fit)
 ```
 
 
 ```{r}
-myNames <- lavNames(sem(model))
-myData <- data[myNames]
-myData <- myData[complete.cases(myData), ]
-myCov <- cov(myData)
-round(myCov, 2)
-##check whether any correlations are perfect (ie. any colinearity)
-myCor <- cov2cor(myCov)
-noDiag <- myCor
-diag(noDiag) <- 0
-any(noDiag == 1)
-## if not, check for multicollinearity (ie. is one variable a linear combination of 2+ variables?)
-det(myCov) < 0
-## or 
-any(eigen(myCov)$values < 0)
-```
-```
+ch.model <- '
 
+chla ~ treatment + temp + 
+```
 
