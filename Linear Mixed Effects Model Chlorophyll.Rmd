@@ -1,0 +1,285 @@
+---
+title: "Chlorophyll a analysis"
+author: "Anna Radchenko"
+date: "March 24, 2020"
+output: html_document
+---
+
+
+```{r}
+PChla <- read.csv("~/Theses Pieces/Tank Pad Pilot Study/PercentChlaChange.csv")
+chlwq <- read.csv("~/Theses Pieces/Tank Pad Pilot Study/ChlaWQReplicateAcuteData1.csv")
+```
+
+
+```{r}
+plot(chlwq$Chl.a ~ chlwq$Treatment)
+```
+
+```{r}
+starting <- aov(log1p(chlwq$Chl.a) ~ as.factor(chlwq$Tank), subset = chlwq$Time == "Pre")
+summary(starting)
+shapiro.test(residuals(starting))
+#is the chlorophyll concentration different between tanks at the start of each trial?
+```
+
+```{r}
+both <- aov(log1p(chlwq$Chl.a) ~ as.factor(chlwq$Tank), subset = chlwq$Time == "Post")
+summary(both)
+shapiro.test(residuals(both))
+plot(both)
+```
+
+
+```{r}
+glm1 <- glm(log1p(Chl.a) ~ as.factor(Treatment) + as.factor(Tank) + Temp + as.factor(Time), data = chlwq)
+summary(glm1)
+```
+
+```{r}
+plot(log1p(Chl.a) ~ Time, data = chlwq, xlab = 'Time', ylab = 'Log + 1 (Chlorophyll a concentration (ug/L)')
+abline(glm1)
+```
+
+
+
+
+```{r}
+library(ggplot2)
+TreatmentF = as.factor(chlwq$Treatment)
+dim(chlwq)
+```
+
+```{r}
+ggplot(data = chlwq, mapping = aes(x = TreatmentF, y = Chl.a)) + 
+  geom_point(mapping = aes(color = Time)) +
+  geom_smooth(mapping = aes(linetype = Time, color = Time), method = 'loess') +
+  scale_color_manual(values = c("red", "blue")) +
+  theme_classic()
+```
+
+```{r}
+hist(chlwq$Chl.a)
+```
+
+
+```{r}
+ggplot() + geom_point(data = chlwq, aes(x = TreatmentF, y = Chl.a, color = Temp, shape = Time)) +
+labs(x = 'Volume Ozonated (%)', y = 'Chlorophyll a Concentration (ug/L)') +
+scale_color_gradient()
+```
+
+```{r}
+ggplot() + geom_point(data = chlwq, aes(x = TreatmentF, y = log1p(Chl.a), color = Temp, shape = Time)) +
+labs(x = 'Volume Ozonated (%)', y = 'Chlorophyll a Concentration (ug/L)') +
+scale_color_gradient()
+```
+
+
+```{r}
+Treatment1 <- scale(chlwq$Treatment)
+chlwq <- cbind(chlwq, Treatment1)
+chlwq <- data.frame(chlwq)
+chlwq <- within(chlwq, Sample <- factor(Tank:Date))
+chlwq <- data.frame(chlwq)
+
+Chl.a1 <- log1p(chlwq$Chl.a)
+chlwq <- cbind(chlwq, Chl.a1)
+chlwq <- data.frame(chlwq)
+```
+
+
+```{r}
+library(lme4)
+lin1 <- lmer(log1p(Chl.a) ~ factor(Treatment1) + Temp + factor(Time) + Salinity + pH + Height + (1|Tank) + (1|Sample), data = chlwq, REML = F)
+lin1
+summary(lin1)
+shapiro.test(residuals(lin1))
+```
+
+```{r}
+plot(lin1)
+```
+
+
+
+```{r}
+(split_plot <- ggplot(aes(factor(Treatment1), log1p(Chl.a)), data = chlwq) + 
+  geom_point() + 
+  
+  xlab("Time") + 
+  ylab("Log + 1 (Chlorophyll a Concentration (ug/L))")) +
+  geom_point(alpha = 0.5) +
+      theme_classic() +
+      geom_line(data = cbind(chlwq, pred = predict(lin1)), aes(y = pred), size = 1) +  # adding predicted line from mixed model 
+      theme(legend.position = "none",
+            panel.spacing = unit(2, "lines"))  # adding space between panels
+```
+
+```{r}
+Chlab <- chlwq$Chl.a [subset = chlwq$Time == "Pre"]
+Chlaa <- chlwq$Chl.a [subset =chlwq$Time == "Post"]
+```
+
+
+
+
+
+```{r}
+library(lme4)
+lin3 <- lmer(log1p(Chl.a) ~ factor(Treatment1) + Temp + factor(Time) + Salinity + pH  + (1|Tank) + (1|Sample), data = chlwq, REML = F)
+lin3
+summary(lin3)
+```
+
+```{r}
+lin2 <- lmer(log1p(Chl.a) ~ factor(Treatment1) + Temp + factor(Time) + Salinity + pH + Height + Temp*Salinity*pH + (1|Tank) + (1|Sample), data = chlwq, REML = F)
+lin2
+summary(lin2)
+shapiro.test(residuals(lin2))
+```
+
+```{r}
+lin4 <- lmer(Chl.a1 ~ factor(Treatment1) + Temp + factor(Time) + factor(Treatment1)*Temp +  pH  + (1|Tank) + (1|Sample) , data = chlwq, REML = F)
+summary(lin4)
+```
+
+```{r}
+print(lin4, correlation = TRUE)
+```
+
+
+```{r}
+(split_plot <- ggplot(aes(as.factor(Treatment), log1p(Chl.a)), color = Temp, data = chlwq) + 
+  geom_point(data = chlwq, aes(color = Temp, shape = Time)) + 
+  
+  xlab("Volume Ozonated (%)") + 
+  ylab("Log + 1 (Chlorophyll a Concentration (ug/L))")) +
+  geom_point(alpha = 0.5) +
+      theme_classic() +
+      geom_line(data = cbind(chlwq, pred = predict(lin4)), aes(y = pred), size = 1) +  # adding predicted line from mixed model 
+      theme(legend.position = "none",
+            panel.spacing = unit(2, "lines"))  # adding space between panels
+```
+
+
+
+```{r}
+library(ggeffects)  # install the package first if you haven't already, then load it
+
+# Extract the prediction data frame
+pred.mm <- ggpredict(mixed.lmer2, terms = c("bodyLength2"))  # this gives overall predictions for the model
+
+# Plot the predictions 
+
+(ggplot(pred.mm) + 
+   geom_line(aes(x = x, y = predicted)) +          # slope
+   geom_ribbon(aes(x = x, ymin = predicted - std.error, ymax = predicted + std.error), 
+               fill = "lightgrey", alpha = 0.5) +  # error band
+   geom_point(data = dragons,                      # adding the raw data (scaled values)
+              aes(x = bodyLength2, y = testScore, colour = mountainRange)) + 
+   labs(x = "Body Length (indexed)", y = "Test Score", 
+        title = "Body length does not affect intelligence in dragons") + 
+   theme_minimal()
+)
+```
+
+
+
+
+
+```{r}
+str(chlwq)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+```{r}
+boxplot(PChla$Pchlchange ~ PChla$Treatment)
+```
+```{r}
+plot(PChla$Pchlchange ~ PChla$Temp)
+```
+
+
+```{r}
+head(PChla)
+```
+
+```{r}
+an1 <- aov(log1p(Chl.a) ~ factor(Treatment) + Temp + factor(Time) + factor(Treatment)*Temp +  pH  + Date %in% Tank, data = chlwq)
+summary(an1)
+```
+
+
+
+
+```{r}
+lmc1 <- lm(log1p(Chl.a) ~ factor(Treatment) + Temp + factor(Time) + factor(Treatment)*Temp +  pH  + Date %in% Tank, data = chlwq)
+summary(lmc1)
+shapiro.test(residuals(lmchla1))
+
+```
+
+```{r}
+ggplot() + geom_point(data = PChla, aes(x = Treatment, y = Pchlchange, color = Temp)) +
+labs(x = 'Volume Ozonated (%)', y = 'Percent Change in Chlorophyll a Concentration (ug/L)') +
+scale_color_gradient()
+```
+
+```{r}
+ggplot() + geom_point(data = PChla, aes(x = Temp, y = Pchlchange, shape = factor(Treatment))) +
+labs(x = 'Temperature', y = 'Percent Change in Chlorophyll a Concentration (ug/L)') +
+scale_color_gradient()
+```
+
+
+
+```{r}
+par(mfrow=c(1,2))
+plot(0:1, 0:1, type='n', ylim = range(log1p(chlwq$Chl.a)), axes = F,
+     xlim = c(-0.25, 1.25),
+     xlab = 'Time', ylab = 'Log + 1 Chlorophyll Concentration (ug/L)', frame.plot = T)
+points(log1p(chlwq$Chl.a)[chlwq$Time == 'Pre'])
+points(log1p(chlwq$Chl.a)[chlwq$Time == 'Post'])
+axis(side = 1, at = 0:1, labels = c('Pre', 'Post'))
+axis(side = 2)
+abline(lmc1)
+```
+
+```{r}
+plot(log1p(Chl.a) ~ Treatment, data = chlwq, 
+     xlab = 'Volume Ozonated (%)', ylab = 'log + 1 Chlorophyll Concentration (ug/L)')
+abline(lmc1)
+```
+
+```{r}
+plot(log1p(Chl.a) ~ factor(Treatment), data = chlwq, type = 'n', 
+     xlab = 'Volume Ozonated (%)', ylab = 'log + 1 Chlorophyll Concentration (ug/L)')
+points(log1p(Chl.a) ~ factor(Treatment), data = chlwq, subset = Time == "Pre",
+       pch = 1, col = 'red')
+xrange = range(chlwq$Treatment[chlwq$Time == "Pre"])
+lines(xrange, 
+      predict(lmc1, 
+              newdata = data.frame(Treatment = xrange, Time = "Pre")),
+      col = 'red', lty = 1)
+points(log1p(Chl.a) ~ factor(Treatment), data = chlwq, subset = Time == "Post",
+       pch = 2, col = 'blue')
+xrange = range(chlwq$Treatment[chlwq$Time == "Post"])
+lines(xrange, 
+      predict(lmc1, 
+              newdata = data.frame(Treatment = xrange, Time = "Post")),
+      col = 'blue', lty = 2)
+legend('topleft', c('Pre', 'Post'), col = c('red', 'blue'), 
+       pch = c(1, 2), lty = c(1, 2), bty = 'n')
+```
+
