@@ -150,6 +150,12 @@ print(lin4, correlation = TRUE)
 
 
 ```{r}
+library(car)
+Anova(lin4)
+```
+
+
+```{r}
 (split_plot <- ggplot(aes(as.factor(Treatment), log1p(Chl.a)), color = Temp, data = chlwq) + 
   geom_point(data = chlwq, aes(color = Temp, shape = Time)) + 
   
@@ -161,6 +167,21 @@ print(lin4, correlation = TRUE)
       theme(legend.position = "none",
             panel.spacing = unit(2, "lines"))  # adding space between panels
 ```
+
+
+```{r}
+(split_plot <- ggplot(aes(as.factor(Time), log1p(Chl.a)), color = Temp, data = chlwq) + 
+  geom_point(data = chlwq, aes(color = Temp, shape = factor(Treatment))) + 
+  
+  xlab("Time") + 
+  ylab("Log + 1 (Chlorophyll a Concentration (ug/L))")) +
+  geom_point(alpha = 0.5) +
+      theme_classic() +
+      geom_line(data = cbind(chlwq, pred = predict(lin4)), aes(y = pred), size = 1) +  # adding predicted line from mixed model 
+      theme(legend.position = "none",
+            panel.spacing = unit(2, "lines"))  # adding space between panels
+```
+
 
 
 
@@ -229,6 +250,21 @@ summary(lmc1)
 shapiro.test(residuals(lmchla1))
 
 ```
+
+```{r}
+(split_plot <- ggplot(aes(as.factor(Time), log1p(Chl.a)), color = Temp, data = chlwq) + 
+  geom_point(data = chlwq, aes(color = Temp, shape = factor(Treatment))) + 
+  
+  xlab("Volume Ozonated (%)") + 
+  ylab("Log + 1 (Chlorophyll a Concentration (ug/L))")) +
+  geom_point(alpha = 0.5) +
+      theme_classic() +
+      geom_line(data = cbind(chlwq, pred = predict(lmc1)), aes(y = pred), size = 1) +  # adding predicted line from mixed model 
+      theme(legend.position = "none",
+            panel.spacing = unit(2, "lines"))  # adding space between panels
+```
+
+
 
 ```{r}
 ggplot() + geom_point(data = PChla, aes(x = Treatment, y = Pchlchange, color = Temp)) +
