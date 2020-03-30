@@ -11,6 +11,7 @@ Cage.Mass <- read.csv("~/Theses Pieces/Tank Pad Pilot Study/Cage Mass.csv")
 ```{r}
 mass <- aov(Cage.Mass$Mass ~ Cage.Mass$ï..Tank)
 summary(mass)
+shapiro.test(residuals(mass))
 ```
 
 ```{r}
@@ -55,6 +56,12 @@ summary(length1)
 ```
 
 ```{r}
+length2 <- aov(Length ~ Treatment + Tank, data = gill)
+summary(length2)
+```
+
+
+```{r}
 Chla <- read.csv("~/Theses Pieces/Tank Pad Pilot Study/Post.Chla.csv")
 ```
 
@@ -63,6 +70,15 @@ chl1 <- aov(Chla$Chla ~ as.factor(Chla$Time), subset = Chla$Tank == 'L1')
 summary (chl1)
 TukeyHSD(chl1)
 ```
+
+```{r}
+chlt <- aov(Chla$Chla ~ as.factor(Chla$Tank), subset = Chla$Time == '0')
+summary(chlt)
+TukeyHSD(chlt)
+```
+
+
+
 
 ```{r}
 chl2 <- aov(Chla$Chla ~ as.factor(Chla$Time), subset = Chla$Tank == 'L2')
@@ -84,7 +100,30 @@ TukeyHSD(chl)
 ```
 
 ```{r}
-plot(Chla$Chla ~ Chla$Time, subset = Chla$Tank == 'L1', type = "o", col ='red')
-lines(Chla$Chla~ Chla$Time, subset = Chla$Tank == 'L2', type = "o", col = "blue)
+plot(Chla$Chla[Chla$Tank == "L1"] ~ Chla$Time[Chla$Tank =="L1"], type = "o", col ='red', xaxt = "n", yaxt = "n", xlab = "Time Since Ozonation (hours)", ylab = "Chlorophyll a concentration (ug/L)")
+lines(Chla$Chla[Chla$Tank =="L2"] ~ Chla$Time[Chla$Tank == "L2"], type = "o", col = "blue")
+lines(Chla$Chla[Chla$Tank =="L4"] ~ Chla$Time[Chla$Tank == "L4"], type = "o", col = "green")
+axis(1, at = seq(0,72, by =24))
+axis(2, at = seq(0,12, by =2))
+legend("topright", legend=c("L1", "L2", "L4"), col=c("red", "blue", "green"), lty =1, cex =0.8)
+
+
+```
+
+```{r}
+ann <- read.csv("~/Theses Pieces/Tank Pad Pilot Study/ann.csv")
+```
+
+
+```{r}
+boxplot(ann$Nitrate~ann$Time, ylab = 'Nitrate Concentration (ppm)')
+```
+
+```{r}
+boxplot(ann$Nitrite~ann$Time, ylab = 'Nitrite Concentration (ppm)')
+```
+
+```{r}
+boxplot(ann$Ammonia~ann$Time, ylab = 'Ammonia Concentration (ppm)')
 ```
 
