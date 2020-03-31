@@ -1,0 +1,17 @@
+---
+title: "Linear Model Chlorophyll a analysis"
+author: "Anna Radchenko"
+date: "March 31, 2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+# setup the R enviornment for kniting markdown doc properly
+library(knitr)
+opts_knit$set(root.dir='../')
+```
+
+```{r}
+chlwq <- read.csv("./Data/ChlaWQReplicateAcuteData1.csv")
+```
+
