@@ -5,7 +5,7 @@ date: "March 24, 2020"
 output: html_document
 ---
 
-```{r}
+```{r setup, include=FALSE}
 # setup the R enviornment for kniting markdown doc properly
 library(knitr)
 opts_knit$set(root.dir='../')
