@@ -5,11 +5,18 @@ date: "March 24, 2020"
 output: html_document
 ---
 
+```{r}
+# setup the R enviornment for kniting markdown doc properly
+library(knitr)
+opts_knit$set(root.dir='../')
+```
+
 
 ```{r}
-PChla <- read.csv("~/Theses Pieces/Tank Pad Pilot Study/PercentChlaChange.csv")
-chlwq <- read.csv("~/Theses Pieces/Tank Pad Pilot Study/ChlaWQReplicateAcuteData1.csv")
+PChla <- read.csv("./Data/PercentChlaChange.csv")
+chlwq <- read.csv("./Data/ChlaWQReplicateAcuteData1.csv")
 ```
+
 
 
 ```{r}
@@ -77,15 +84,8 @@ scale_color_gradient()
 
 
 ```{r}
-Treatment1 <- scale(chlwq$Treatment)
-chlwq <- cbind(chlwq, Treatment1)
-chlwq <- data.frame(chlwq)
-chlwq <- within(chlwq, Sample <- factor(Tank:Date))
-chlwq <- data.frame(chlwq)
-
-Chl.a1 <- log1p(chlwq$Chl.a)
-chlwq <- cbind(chlwq, Chl.a1)
-chlwq <- data.frame(chlwq)
+chlwq$Sample <- with(chlwq, factor(paste(Tank, Date, sep = ":")))
+chlwq$Chl.a1 <- log1p(chlwq$Chl.a)
 ```
 
 
@@ -185,25 +185,7 @@ Anova(lin4)
 
 
 
-```{r}
-library(ggeffects)  # install the package first if you haven't already, then load it
 
-# Extract the prediction data frame
-pred.mm <- ggpredict(mixed.lmer2, terms = c("bodyLength2"))  # this gives overall predictions for the model
-
-# Plot the predictions 
-
-(ggplot(pred.mm) + 
-   geom_line(aes(x = x, y = predicted)) +          # slope
-   geom_ribbon(aes(x = x, ymin = predicted - std.error, ymax = predicted + std.error), 
-               fill = "lightgrey", alpha = 0.5) +  # error band
-   geom_point(data = dragons,                      # adding the raw data (scaled values)
-              aes(x = bodyLength2, y = testScore, colour = mountainRange)) + 
-   labs(x = "Body Length (indexed)", y = "Test Score", 
-        title = "Body length does not affect intelligence in dragons") + 
-   theme_minimal()
-)
-```
 
 
 
