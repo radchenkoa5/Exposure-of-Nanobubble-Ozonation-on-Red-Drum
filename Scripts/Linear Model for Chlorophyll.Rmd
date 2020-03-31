@@ -16,24 +16,186 @@ chlwq <- read.csv("./Data/ChlaWQReplicateAcuteData1.csv")
 ```
 
 ```{r}
+library(ggplot2)
+library(GGally)
+library(gridExtra)
+library(scatterplot3d)
+library(MASS)
 library(lubridate)
+library(lme4)
 class(chlwq$Date)
-chlwq$Date <- mdy(chlwq$Date)
 ```
 
 ```{r}
-plot(chlwq)
+chlwq$Time <- factor(chlwq$Time, levels = c("Pre", "Post"))
+chlwq$Chl.a1 <- log(chlwq$Chl.a)
+
+```
+
+```{r}
+chlwq$Date <- as.Date(chlwq$Date, "%m.%d.%y")
+class(chlwq$Date)
+chlwq$Date
 ```
 
 
 ```{r}
-panel.cor <- function(x, y, digits = 2, prefix = '', cex.cor = 3, ...)
-  usr <- par("usr"); on.exit(par(usr))
-  par(usr = c(0, 1 , 0, 1))
-  r <- abs(cor(x, y))
-  txt <- format(c(r, 0.123456789), digits = digits)[1]
-  txt <- paste0(prefix, txt)
-  if(missing(cex.cor))
-    cex.cor <- 0.8/strwidth(txt)
+ggpairs(chlwq)
+
+```
+
+```{r}
+chl <- ggpairs(chlwq, columns = c("Treatment", "Chl.a", "Chl.a1","Time", "Tank", "Temp", "pH"), columnLabels =  c("Treatment", "Chl.a", "Chl.a1","Time", "Tank", "Temp", "pH"))
+chl
+```
+
+
+
+
+```{r}
+
+## formula method
+pairs(Chl.a ~ Treatment + Time + Chl.a1 + pH + Temp, data = chlwq)
+
+
+## put histograms on the diagonal
+panel.hist <- function(x, ...)
+{
+    usr <- par("usr"); on.exit(par(usr))
+    par(usr = c(usr[1:2], 0, 1.5) )
+    h <- hist(x, plot = FALSE)
+    breaks <- h$breaks; nB <- length(breaks)
+    y <- h$counts; y <- y/max(y)
+    rect(breaks[-nB], 0, breaks[-1], y, col="cyan", ...)
+}
+
+```
+
+
+```{r}
+ggplot(chlwq, aes(Treatment, Chl.a1)) +
+  geom_point(aes(col=Date))
+  facet_wrap(~Tank)
+
+ggplot(chlwq, aes(Temp, Chl.a1)) +
+  geom_point(aes(col=Date)) +
+  facet_wrap(~Tank)
+
+ggplot(chlwq, aes(Time, Chl.a1)) +
+  geom_point(aes(col=Date)) +
+  facet_wrap(~Tank)
+```
+
+
+```{r}
+main <- lm(Chl.a1 ~ Treatment + Temp + Time + pH + Salinity + Height + Tank, data = chlwq)
+summary(main)
+```
+
+```{r}
+main2 <- update(main, . ~ . -Salinity - Height)
+summary(main2)
+```
+
+```{r}
+main3 <- update(main2, . ~ . + I(Treatment^2) )
+summary(main3)
+```
+
+```{r}
+anova(main, main2)
+```
+
+```{r}
+anova(main2, main3)
+```
+```{r}
+AIC(main)
+AIC(main2)
+AIC(main3)
+```
+
+
+
+```{r}
+lin4 <- lmer(Chl.a1 ~ Treatment + Temp + Time + Treatment*Temp +  pH  + (1|Tank)  , data = chlwq)
+car::Anova(lin4, type = 3)
+```
+
+```{r}
+anova(lin4, main3)
+```
+
+```{r}
+main4 <- update(main3, .~. + Treatment*Temp)
+summary(main4)
+```
+
+```{r}
+anova(main3, main4)
+AIC(main4)
+```
+
+```{r}
+main5 <- update(main4, .~. + Treatment*Tank)
+summary(main5)
+```
+
+
+```{r}
+xrange = range(chlwq$Treatment)
+Trange = range(chlwq$Temp)
+prange = range(chlwq$pH)
+Time = chlwq$Time
+
+
+plot(Chl.a1 ~ Treatment, data = chlwq, type = 'n', 
+     xlab = 'Volume Ozonated (%)', ylab = 'Log(Chlorophyll a concentration(ug/L)')
+points(Chl.a1 ~ Treatment, data = chlwq, subset = Tank == "L1",
+       pch = 1, col = 'red')
+# add the fitted regression line using two points at either end of the range of x 
+lines(xrange, 
+      predict(main5, 
+              newdata = data.frame(Treatment = xrange, Temp = Trange, Time, pH = prange, Tank = "L1")),
+      col = 'red', lty = 1)
+points(Chl.a1 ~ Treatment, data = chlwq, subset = Tank == "L2",
+       pch = 2, col = 'blue')
+lines(xrange, 
+      predict(main5, 
+              newdata = data.frame(Treatment = xrange, Temp = Trange, Time, pH = prange, Tank = "L2")),
+      col = 'blue', lty = 2)
+points(Chl.a1 ~ Treatment, data = chlwq, subset = Tank == "L4",
+       pch = 3, col = 'green')
+
+lines(xrange, 
+      predict(main5, 
+              newdata = data.frame(Treatment = xrange, Temp = Trange, Time, pH = prange, Tank = "L4")),
+      col = 'green', lty = 3)
+legend('topleft', c('Fertilized', 'Unfertilized'), col = c('red', 'blue', 'green'), 
+       pch = c(1, 2, 3), lty = c(1, 2, 3), bty = 'n')
+```
+
+
+
+
+```{r}
+plot(Chl.a1) ~ Treatment), data = chlwq, type = 'n', 
+     xlab = 'Volume Ozonated (%)', ylab = 'log + 1 Chlorophyll Concentration (ug/L)')
+points(log1p(Chl.a) ~ factor(Treatment), data = chlwq, subset = Time == "Pre",
+       pch = 1, col = 'red')
+xrange = range(chlwq$Treatment[chlwq$Time == "Pre"])
+lines(xrange, 
+      predict(lmc1, 
+              newdata = data.frame(Treatment = xrange, Time = "Pre")),
+      col = 'red', lty = 1)
+points(log1p(Chl.a) ~ factor(Treatment), data = chlwq, subset = Time == "Post",
+       pch = 2, col = 'blue')
+xrange = range(chlwq$Treatment[chlwq$Time == "Post"])
+lines(xrange, 
+      predict(lmc1, 
+              newdata = data.frame(Treatment = xrange, Time = "Post")),
+      col = 'blue', lty = 2)
+legend('topleft', c('Pre', 'Post'), col = c('red', 'blue'), 
+       pch = c(1, 2), lty = c(1, 2), bty = 'n')
 ```
 
