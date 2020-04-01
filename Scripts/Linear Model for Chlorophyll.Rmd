@@ -127,7 +127,7 @@ anova(lin4, main3)
 ```
 
 ```{r}
-main4 <- update(main3, .~. + Treatment*Temp)
+main4 <- update(main3, .~. + (I(Treatment)^2)*Temp - Treatment)
 summary(main4)
 ```
 
@@ -143,10 +143,11 @@ summary(main5)
 
 
 ```{r}
+#looking at main5 model with tank & treatment interaction, seems to predict lower treatments better, different slopes for each tank
 xrange = range(chlwq$Treatment)
 Trange = range(chlwq$Temp)
 prange = range(chlwq$pH)
-Time = chlwq$Time
+Time = levels(chlwq$Time)
 
 
 plot(Chl.a1 ~ Treatment, data = chlwq, type = 'n', 
@@ -155,47 +156,133 @@ points(Chl.a1 ~ Treatment, data = chlwq, subset = Tank == "L1",
        pch = 1, col = 'red')
 # add the fitted regression line using two points at either end of the range of x 
 lines(xrange, 
-      predict(main5, 
-              newdata = data.frame(Treatment = xrange, Temp = Trange, Time, pH = prange, Tank = "L1")),
+      predict.lm(main5, 
+              newdata = data.frame(Treatment = xrange, Temp = Trange, pH = prange, Time, Tank = "L1")),
       col = 'red', lty = 1)
 points(Chl.a1 ~ Treatment, data = chlwq, subset = Tank == "L2",
        pch = 2, col = 'blue')
 lines(xrange, 
-      predict(main5, 
-              newdata = data.frame(Treatment = xrange, Temp = Trange, Time, pH = prange, Tank = "L2")),
+      predict.lm(main5, 
+              newdata = data.frame(Treatment = xrange, Temp = Trange, pH = prange, Time, Tank = "L2")),
       col = 'blue', lty = 2)
 points(Chl.a1 ~ Treatment, data = chlwq, subset = Tank == "L4",
        pch = 3, col = 'green')
 
 lines(xrange, 
-      predict(main5, 
-              newdata = data.frame(Treatment = xrange, Temp = Trange, Time, pH = prange, Tank = "L4")),
+      predict.lm(main5, 
+              newdata = data.frame(Treatment = xrange, Temp = Trange,  pH = prange, Time, Tank = "L4")),
       col = 'green', lty = 3)
-legend('topleft', c('Fertilized', 'Unfertilized'), col = c('red', 'blue', 'green'), 
+legend('topleft', c('L1', 'L2', 'L4'), col = c('red', 'blue', 'green'), 
        pch = c(1, 2, 3), lty = c(1, 2, 3), bty = 'n')
 ```
 
+```{r}
+#looking at a broader treatment and temperature range, seems like it fits the data beter
+xrange = range(0:100)
+Trange = range(10:30)
+prange = range(7.70:8.1)
+Time = levels(chlwq$Time)
 
+
+plot(Chl.a1 ~ Treatment, data = chlwq, type = 'n', 
+     xlab = 'Volume Ozonated (%)', ylab = 'Log(Chlorophyll a concentration(ug/L)')
+points(Chl.a1 ~ Treatment, data = chlwq, subset = Tank == "L1",
+       pch = 1, col = 'red')
+# add the fitted regression line using two points at either end of the range of x 
+lines(xrange, 
+      predict.lm(main5, 
+              newdata = data.frame(Treatment = xrange, Temp = Trange, pH = prange, Time, Tank = "L1")),
+      col = 'red', lty = 1)
+points(Chl.a1 ~ Treatment, data = chlwq, subset = Tank == "L2",
+       pch = 2, col = 'blue')
+lines(xrange, 
+      predict.lm(main5, 
+              newdata = data.frame(Treatment = xrange, Temp = Trange, pH = prange, Time, Tank = "L2")),
+      col = 'blue', lty = 2)
+points(Chl.a1 ~ Treatment, data = chlwq, subset = Tank == "L4",
+       pch = 3, col = 'green')
+
+lines(xrange, 
+      predict.lm(main5, 
+              newdata = data.frame(Treatment = xrange, Temp = Trange,  pH = prange, Time, Tank = "L4")),
+      col = 'green', lty = 3)
+legend('topleft', c('L1', 'L2', 'L4'), col = c('red', 'blue', 'green'), 
+       pch = c(1, 2, 3), lty = c(1, 2, 3), bty = 'n')
+```
+
+```{r}
+#looking at main4 model, without treatment & tank interaction, slopes per tank are more similar
+xrange = range(chlwq$Treatment)
+Trange = range(chlwq$Temp)
+prange = range(chlwq$pH)
+Time = levels(chlwq$Time)
+
+
+plot(Chl.a1 ~ Treatment, data = chlwq, type = 'n', 
+     xlab = 'Volume Ozonated (%)', ylab = 'Log(Chlorophyll a concentration(ug/L)')
+points(Chl.a1 ~ Treatment, data = chlwq, subset = Tank == "L1",
+       pch = 1, col = 'red')
+# add the fitted regression line using two points at either end of the range of x 
+lines(xrange, 
+      predict.lm(main4, 
+              newdata = data.frame(Treatment = xrange, Temp = Trange, pH = prange, Time, Tank = "L1")),
+      col = 'red', lty = 1)
+points(Chl.a1 ~ Treatment, data = chlwq, subset = Tank == "L2",
+       pch = 2, col = 'blue')
+lines(xrange, 
+      predict.lm(main4, 
+              newdata = data.frame(Treatment = xrange, Temp = Trange, pH = prange, Time, Tank = "L2")),
+      col = 'blue', lty = 2)
+points(Chl.a1 ~ Treatment, data = chlwq, subset = Tank == "L4",
+       pch = 3, col = 'green')
+
+lines(xrange, 
+      predict.lm(main4, 
+              newdata = data.frame(Treatment = xrange, Temp = Trange,  pH = prange, Time, Tank = "L4")),
+      col = 'green', lty = 3)
+legend('topleft', c('L1', 'L2', 'L4'), col = c('red', 'blue', 'green'), 
+       pch = c(1, 2, 3), lty = c(1, 2, 3), bty = 'n')
+```
+
+```{r}
+#looking at a broader treatment and temperature range for main 4 model, seems like it fits the data beter
+
+xrange = range(0:100)
+Trange = range(10:30)
+prange = range(7.70:8.1)
+Time = levels(chlwq$Time)
+
+
+plot(Chl.a1 ~ Treatment, data = chlwq, type = 'n', 
+     xlab = 'Volume Ozonated (%)', ylab = 'Log(Chlorophyll a concentration(ug/L)')
+points(Chl.a1 ~ Treatment, data = chlwq, subset = Tank == "L1",
+       pch = 1, col = 'red')
+# add the fitted regression line using two points at either end of the range of x 
+lines(xrange, 
+      predict.lm(main4, 
+              newdata = data.frame(Treatment = xrange, Temp = Trange, pH = prange, Time, Tank = "L1")),
+      col = 'red', lty = 1)
+points(Chl.a1 ~ Treatment, data = chlwq, subset = Tank == "L2",
+       pch = 2, col = 'blue')
+lines(xrange, 
+      predict.lm(main4, 
+              newdata = data.frame(Treatment = xrange, Temp = Trange, pH = prange, Time, Tank = "L2")),
+      col = 'blue', lty = 2)
+points(Chl.a1 ~ Treatment, data = chlwq, subset = Tank == "L4",
+       pch = 3, col = 'green')
+
+lines(xrange, 
+      predict.lm(main4, 
+              newdata = data.frame(Treatment = xrange, Temp = Trange,  pH = prange, Time, Tank = "L4")),
+      col = 'green', lty = 3)
+legend('topleft', c('L1', 'L2', 'L4'), col = c('red', 'blue', 'green'), 
+       pch = c(1, 2, 3), lty = c(1, 2, 3), bty = 'n')
+```
+Also looked at modeling without transformed chlorophyll data and the line fits were worse.
 
 
 ```{r}
-plot(Chl.a1) ~ Treatment), data = chlwq, type = 'n', 
-     xlab = 'Volume Ozonated (%)', ylab = 'log + 1 Chlorophyll Concentration (ug/L)')
-points(log1p(Chl.a) ~ factor(Treatment), data = chlwq, subset = Time == "Pre",
-       pch = 1, col = 'red')
-xrange = range(chlwq$Treatment[chlwq$Time == "Pre"])
-lines(xrange, 
-      predict(lmc1, 
-              newdata = data.frame(Treatment = xrange, Time = "Pre")),
-      col = 'red', lty = 1)
-points(log1p(Chl.a) ~ factor(Treatment), data = chlwq, subset = Time == "Post",
-       pch = 2, col = 'blue')
-xrange = range(chlwq$Treatment[chlwq$Time == "Post"])
-lines(xrange, 
-      predict(lmc1, 
-              newdata = data.frame(Treatment = xrange, Time = "Post")),
-      col = 'blue', lty = 2)
-legend('topleft', c('Pre', 'Post'), col = c('red', 'blue'), 
-       pch = c(1, 2), lty = c(1, 2), bty = 'n')
+par(mfrow = c(2,2))
+plot(main4)
 ```
 
