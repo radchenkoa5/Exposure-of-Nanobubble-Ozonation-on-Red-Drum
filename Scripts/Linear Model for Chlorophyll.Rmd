@@ -27,49 +27,37 @@ class(chlwq$Date)
 ```
 
 ```{r}
-chlwq$Time <- factor(chlwq$Time, levels = c("Pre", "Post"))
+chlwq$Time <- factor(chlwq$Time, levels = c("Pre", "Post")) #making sure pre always comes before post on figures
 chlwq$Chl.a1 <- log(chlwq$Chl.a)
-
+#transforming chlorophyll data since it is not normal
 ```
 
 ```{r}
 chlwq$Date <- as.Date(chlwq$Date, "%m.%d.%y")
 class(chlwq$Date)
 chlwq$Date
+#changing class, so that R understands these are dates
 ```
 
 
-```{r}
-ggpairs(chlwq)
 
+```{r}
+ggpairs(chlwq, columns = c("Treatment", "Chl.a", "Chl.a1", "Temp"), columnLabels =  c("Treatment", "Chl.a", "Chl.a1","Temp"), mapping = aes(color = Tank))
+#looking for relationships in the data
 ```
 
+
+
 ```{r}
-chl <- ggpairs(chlwq, columns = c("Treatment", "Chl.a", "Chl.a1","Time", "Tank", "Temp", "pH"), columnLabels =  c("Treatment", "Chl.a", "Chl.a1","Time", "Tank", "Temp", "pH"))
+chl <- ggpairs(chlwq, columns = c("Treatment", "Chl.a", "Time", "Tank",  "pH"), columnLabels =  c("Treatment", "Chl.a", "Time", "Tank",  "pH"), mapping = aes(color = Tank))
 chl
+#looking for relationships in the data
 ```
 
 
 
 
-```{r}
 
-## formula method
-pairs(Chl.a ~ Treatment + Time + Chl.a1 + pH + Temp, data = chlwq)
-
-
-## put histograms on the diagonal
-panel.hist <- function(x, ...)
-{
-    usr <- par("usr"); on.exit(par(usr))
-    par(usr = c(usr[1:2], 0, 1.5) )
-    h <- hist(x, plot = FALSE)
-    breaks <- h$breaks; nB <- length(breaks)
-    y <- h$counts; y <- y/max(y)
-    rect(breaks[-nB], 0, breaks[-1], y, col="cyan", ...)
-}
-
-```
 
 
 ```{r}
@@ -90,24 +78,29 @@ ggplot(chlwq, aes(Time, Chl.a1)) +
 ```{r}
 main <- lm(Chl.a1 ~ Treatment + Temp + Time + pH + Salinity + Height + Tank, data = chlwq)
 summary(main)
+#first model with everything
 ```
 
 ```{r}
 main2 <- update(main, . ~ . -Salinity - Height)
 summary(main2)
+#getting rid of a few variables
 ```
 
 ```{r}
 main3 <- update(main2, . ~ . + I(Treatment^2) )
 summary(main3)
+#recognizing that there might be a quadratic response to the treatment variable
 ```
 
 ```{r}
 anova(main, main2)
+#comparing models
 ```
 
 ```{r}
 anova(main2, main3)
+#comparing models
 ```
 ```{r}
 AIC(main)
@@ -120,164 +113,45 @@ AIC(main3)
 ```{r}
 lin4 <- lmer(Chl.a1 ~ Treatment + Temp + Time + Treatment*Temp +  pH  + (1|Tank)  , data = chlwq)
 car::Anova(lin4, type = 3)
+#bringing in a linear mixed model that I made in my mixed model rmd to compare to these OLS models
 ```
 
 ```{r}
-anova(lin4, main3)
+anova(lin4, main3) #linear model is better than fixed effects
 ```
 
 ```{r}
-main4 <- update(main3, .~. + (I(Treatment)^2)*Temp - Treatment)
+main4 <- update(main3, .~. + (Treatment^2)*Temp)
 summary(main4)
+#adding in a temperature interaction effect
 ```
 
 ```{r}
 anova(main3, main4)
-AIC(main4)
+AIC(main4) #main4 model has a better AIC
 ```
 
 ```{r}
-main5 <- update(main4, .~. + Treatment*Tank)
+main5 <- update(main4, .~. + Treatment:Tank + Ozone)
 summary(main5)
+print(main5)
+#bringing in an interaction effect between my treatment and each replicate tank
 ```
+
+
 
 
 ```{r}
-#looking at main5 model with tank & treatment interaction, seems to predict lower treatments better, different slopes for each tank
-xrange = range(chlwq$Treatment)
-Trange = range(chlwq$Temp)
-prange = range(chlwq$pH)
-Time = levels(chlwq$Time)
-
-
-plot(Chl.a1 ~ Treatment, data = chlwq, type = 'n', 
-     xlab = 'Volume Ozonated (%)', ylab = 'Log(Chlorophyll a concentration(ug/L)')
-points(Chl.a1 ~ Treatment, data = chlwq, subset = Tank == "L1",
-       pch = 1, col = 'red')
-# add the fitted regression line using two points at either end of the range of x 
-lines(xrange, 
-      predict.lm(main5, 
-              newdata = data.frame(Treatment = xrange, Temp = Trange, pH = prange, Time, Tank = "L1")),
-      col = 'red', lty = 1)
-points(Chl.a1 ~ Treatment, data = chlwq, subset = Tank == "L2",
-       pch = 2, col = 'blue')
-lines(xrange, 
-      predict.lm(main5, 
-              newdata = data.frame(Treatment = xrange, Temp = Trange, pH = prange, Time, Tank = "L2")),
-      col = 'blue', lty = 2)
-points(Chl.a1 ~ Treatment, data = chlwq, subset = Tank == "L4",
-       pch = 3, col = 'green')
-
-lines(xrange, 
-      predict.lm(main5, 
-              newdata = data.frame(Treatment = xrange, Temp = Trange,  pH = prange, Time, Tank = "L4")),
-      col = 'green', lty = 3)
-legend('topleft', c('L1', 'L2', 'L4'), col = c('red', 'blue', 'green'), 
-       pch = c(1, 2, 3), lty = c(1, 2, 3), bty = 'n')
+contrasts(chlwq$Tank) #what this tells me is that intercept is L1 and the coefficient for L2 is the difference from L1 and L4 co from L1
+#L1 is the average tank, need to average the replicates across the tanks and fit the model that's where I predict chla for each tank and average them 
 ```
 
-```{r}
-#looking at a broader treatment and temperature range, seems like it fits the data beter
-xrange = range(0:100)
-Trange = range(10:30)
-prange = range(7.70:8.1)
-Time = levels(chlwq$Time)
 
 
-plot(Chl.a1 ~ Treatment, data = chlwq, type = 'n', 
-     xlab = 'Volume Ozonated (%)', ylab = 'Log(Chlorophyll a concentration(ug/L)')
-points(Chl.a1 ~ Treatment, data = chlwq, subset = Tank == "L1",
-       pch = 1, col = 'red')
-# add the fitted regression line using two points at either end of the range of x 
-lines(xrange, 
-      predict.lm(main5, 
-              newdata = data.frame(Treatment = xrange, Temp = Trange, pH = prange, Time, Tank = "L1")),
-      col = 'red', lty = 1)
-points(Chl.a1 ~ Treatment, data = chlwq, subset = Tank == "L2",
-       pch = 2, col = 'blue')
-lines(xrange, 
-      predict.lm(main5, 
-              newdata = data.frame(Treatment = xrange, Temp = Trange, pH = prange, Time, Tank = "L2")),
-      col = 'blue', lty = 2)
-points(Chl.a1 ~ Treatment, data = chlwq, subset = Tank == "L4",
-       pch = 3, col = 'green')
-
-lines(xrange, 
-      predict.lm(main5, 
-              newdata = data.frame(Treatment = xrange, Temp = Trange,  pH = prange, Time, Tank = "L4")),
-      col = 'green', lty = 3)
-legend('topleft', c('L1', 'L2', 'L4'), col = c('red', 'blue', 'green'), 
-       pch = c(1, 2, 3), lty = c(1, 2, 3), bty = 'n')
-```
-
-```{r}
-#looking at main4 model, without treatment & tank interaction, slopes per tank are more similar
-xrange = range(chlwq$Treatment)
-Trange = range(chlwq$Temp)
-prange = range(chlwq$pH)
-Time = levels(chlwq$Time)
 
 
-plot(Chl.a1 ~ Treatment, data = chlwq, type = 'n', 
-     xlab = 'Volume Ozonated (%)', ylab = 'Log(Chlorophyll a concentration(ug/L)')
-points(Chl.a1 ~ Treatment, data = chlwq, subset = Tank == "L1",
-       pch = 1, col = 'red')
-# add the fitted regression line using two points at either end of the range of x 
-lines(xrange, 
-      predict.lm(main4, 
-              newdata = data.frame(Treatment = xrange, Temp = Trange, pH = prange, Time, Tank = "L1")),
-      col = 'red', lty = 1)
-points(Chl.a1 ~ Treatment, data = chlwq, subset = Tank == "L2",
-       pch = 2, col = 'blue')
-lines(xrange, 
-      predict.lm(main4, 
-              newdata = data.frame(Treatment = xrange, Temp = Trange, pH = prange, Time, Tank = "L2")),
-      col = 'blue', lty = 2)
-points(Chl.a1 ~ Treatment, data = chlwq, subset = Tank == "L4",
-       pch = 3, col = 'green')
-
-lines(xrange, 
-      predict.lm(main4, 
-              newdata = data.frame(Treatment = xrange, Temp = Trange,  pH = prange, Time, Tank = "L4")),
-      col = 'green', lty = 3)
-legend('topleft', c('L1', 'L2', 'L4'), col = c('red', 'blue', 'green'), 
-       pch = c(1, 2, 3), lty = c(1, 2, 3), bty = 'n')
-```
-
-```{r}
-#looking at a broader treatment and temperature range for main 4 model, seems like it fits the data beter
-
-xrange = range(0:100)
-Trange = range(10:30)
-prange = range(7.70:8.1)
-Time = levels(chlwq$Time)
 
 
-plot(Chl.a1 ~ Treatment, data = chlwq, type = 'n', 
-     xlab = 'Volume Ozonated (%)', ylab = 'Log(Chlorophyll a concentration(ug/L)')
-points(Chl.a1 ~ Treatment, data = chlwq, subset = Tank == "L1",
-       pch = 1, col = 'red')
-# add the fitted regression line using two points at either end of the range of x 
-lines(xrange, 
-      predict.lm(main4, 
-              newdata = data.frame(Treatment = xrange, Temp = Trange, pH = prange, Time, Tank = "L1")),
-      col = 'red', lty = 1)
-points(Chl.a1 ~ Treatment, data = chlwq, subset = Tank == "L2",
-       pch = 2, col = 'blue')
-lines(xrange, 
-      predict.lm(main4, 
-              newdata = data.frame(Treatment = xrange, Temp = Trange, pH = prange, Time, Tank = "L2")),
-      col = 'blue', lty = 2)
-points(Chl.a1 ~ Treatment, data = chlwq, subset = Tank == "L4",
-       pch = 3, col = 'green')
-
-lines(xrange, 
-      predict.lm(main4, 
-              newdata = data.frame(Treatment = xrange, Temp = Trange,  pH = prange, Time, Tank = "L4")),
-      col = 'green', lty = 3)
-legend('topleft', c('L1', 'L2', 'L4'), col = c('red', 'blue', 'green'), 
-       pch = c(1, 2, 3), lty = c(1, 2, 3), bty = 'n')
-```
 Also looked at modeling without transformed chlorophyll data and the line fits were worse.
 
 
@@ -285,4 +159,92 @@ Also looked at modeling without transformed chlorophyll data and the line fits w
 par(mfrow = c(2,2))
 plot(main4)
 ```
+
+
+
+
+```{r}
+#predict values based on the model and compare them to actual to see how well the model predicts data, compare the two
+
+sim_mod <- lm(Chl.a1 ~ Tank + Treatment + I(Treatment^2) + Temp + 
+                  Temp:Treatment + Tank:Treatment +
+                  Tank:I(Treatment^2), 
+              data = chlwq)
+sub_mod <- update(sim_mod, . ~ . - Tank - Tank:Treatment - Tank:I(Treatment^2))
+main_mod <- lm(Chl.a1 ~ Treatment + I(Treatment^2), data = chlwq)
+summary(sim_mod)
+plot(sim_mod)
+
+xrange <- seq(min(chlwq$Treatment), max(chlwq$Treatment), length.out = 100)
+
+tanks <- levels(chlwq$Tank)
+plot(Chl.a1 ~ Treatment, data = chlwq, ylim = c(0, 4))
+for(i in seq_along(tanks)) {
+    lines(xrange, 
+          predict(sim_mod, newdata = 
+                     data.frame(Tank = tanks[i],
+                               Treatment = xrange,
+                               Temp = mean(chlwq$Temp))),
+          col = i+1)
+}
+lines(predict(sub_mod, newdata = 
+                  data.frame(
+                        Treatment = xrange,
+                        Temp = mean(chlwq$Temp))),
+      lwd = 2)
+lines(predict(main_mod, newdata = 
+                  data.frame(
+                      Treatment = xrange)), col='purple', lwd=4)
+
+avg_pred <- predict(sim_mod, newdata = 
+                     data.frame(Tank = rep(tanks, each = 100),
+                               Treatment = rep(xrange,
+                                               times = 3),
+                               Temp = mean(chlwq$Temp)))
+avg_pred <- tapply(avg_pred, list(rep(xrange, times = 3)), mean)
+
+lines(xrange, avg_pred, lty = 2, lwd=3)
+
+# obs vs predicted plot
+
+pred <- predict(sim_mod)
+
+plot(chlwq$Chl.a1, pred)
+abline(a=0, b=1)
+
+avg_obs <- tapply(chlwq$Chl.a1, list(chlwq$Treatment), mean)
+avg_pred <- tapply(pred, list(chlwq$Treatment), mean) 
+
+plot(avg_obs, avg_pred)
+abline(a=0, b=1)
+```
+
+
+
+```{r}
+sim_mod <- lm(Chl.a1 ~ Tank + Treatment + I(Treatment^2) + Temp + 
+                  Temp:Treatment + Tank:Treatment +
+                  Tank:I(Treatment^2) + Time, 
+              data = chlwq)
+
+cc <- sub_mod$coefficients
+eqn <- paste("Y =", paste(round(cc[1],2), paste(round(cc[-1],2), names(cc[-1]), sep=" * ", collapse=" + "), sep=" + "), "+ e")
+eqn 
+#looking at the equation based on the model fit
+```
+
+```{r}
+acf(chlwq$Chl.a) #looking for autocorrelation
+```
+
+
+
+
+
+
+
+
+
+
+
 
