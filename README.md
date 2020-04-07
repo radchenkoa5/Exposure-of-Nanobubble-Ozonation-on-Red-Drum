@@ -1,6 +1,9 @@
 # Thesis-Things
 Thesis Code
 
+Focusing on chlorophyll a concentration based on ozone exposure (treatment) and water quality variables.
+Decided not to focus on gill damage for this class.
+
 Data:
 -Contains a Fake dataset focusing on survial. 
 -Fake dataset with gill damage scores and pre-ozonation water quality
