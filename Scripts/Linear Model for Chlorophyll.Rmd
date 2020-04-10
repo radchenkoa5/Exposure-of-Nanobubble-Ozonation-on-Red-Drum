@@ -23,6 +23,8 @@ library(scatterplot3d)
 library(MASS)
 library(lubridate)
 library(lme4)
+library(nlme)
+library(vegan)
 class(chlwq$Date)
 ```
 
@@ -234,17 +236,129 @@ eqn
 ```
 
 ```{r}
+Y = 3.16 + -0.06 * 30 + -0.02 * 30 + -0.29 #prediction for post chl.a if temp = 30 and treatment = 30
+Y
+10^Y 
+#having a negative correlation for temperature doesn't makes sense, as a higher temperature should not lower the chlorophyll a concentration left, but increase it
+```
+
+
+```{r}
 acf(chlwq$Chl.a) #looking for autocorrelation
+#appear to have weak autocorrelation, only a few points outside of the 95% confidence interval
+```
+
+
+```{r}
+
+chladist <- dist(chlwq$Chl.a)
+xy_dist <- dist(chlwq$Date)
+```
+
+
+```{r}
+max_dist = max(xy_dist) / 2
+
+# plot result
+plot(xy_dist, chladist)
+abline(lm(chladist ~ xy_dist), lwd=3, col='red')
+lines(lowess(xy_dist, chladist), lwd=3, col='pink')
+abline(v = max_dist, col='red', lwd=3, lty=2)
+```
+
+```{r}
+obs_cor = cor(xy_dist, chladist)
+obs_cor
+```
+
+```{r}
+chlamantel = mantel(xy_dist, chladist)
+chlamantel
+```
+
+```{r}
+chl_gls <- gls(Chl.a1 ~ Tank + Treatment + I(Treatment^2) + Temp + 
+                  Temp:Treatment + Tank:Treatment +
+                  Tank:I(Treatment^2) + Time, 
+              data = chlwq)
+plot(Variogram (chl_gls))
+```
+
+```{r}
+chl_exp = update(chl_gls, corr=corExp())
+# examine fit of error model to the raw model residuals
+# note this function defaults to displaying pearson standardized residuals
+# resType='p' or resType='pearson'
+plot(Variogram(chl_exp, maxDist = max_dist))
+```
+
+```{r}
+# that doesn't look so good because clearly the model does not fit the error 
+# very well, it appears that there is a nugget (i.e., non-zero y-intercept)
+# Let's examine the normalized residuals in which the residuals are 
+# devided by the estimate of the variance-covariance matrix. If the model
+# fits well these residuals should be normally distributed.
+plot(Variogram(chl_exp, resType='normalized', maxDist = max_dist))
+```
+
+```{r}
+# we see a little bit of a trend in the residuals but not too bad
+
+# let's look at the same model but with a nugget
+chl_exp_nug = update(chl_exp, corr=corExp(nugget=T))
+plot(Variogram(chl_exp_nug, maxDist = max_dist))
+```
+
+```{r}
+plot(Variogram(chl_exp_nug, resType='n', maxDist = max_dist))
+```
+
+```{r}
+# those look like they provide a better fit to the data
+
+# let's examine the rational quadratic error model
+chl_rat_nug = update(chl_gls, corr=corRatio(nugget=T))
+# examine fit of error model to model residuals
+plot(Variogram(chl_rat_nug, maxDist = max_dist))
+```
+
+```{r}
+plot(Variogram(chl_rat_nug, resType='n', maxDist = max_dist))
+```
+
+```{r}
+# this model seems to fit about as a good as the exponential with the nugget
+
+# let's compare the models
+anova(chl_gls, chl_exp, chl_exp_nug, chl_rat_nug, test=F)
+```
+
+```{r}
+#it appears that hte exponential model is the best followed closely by the exponential and rational models with nuggests
+summary(chl_exp)
+```
+
+```{r}
+anova(main5, chl_exp)
 ```
 
 
 
 
+```{r}
+main6 <- update(main5,  .~. - pH - Time - Tank - Tank:Treatment)
+summary(main6)
+cc <- main6$coefficients
+eqn <- paste("Y =", paste(round(cc[1],2), paste(round(cc[-1],2), names(cc[-1]), sep=" * ", collapse=" + "), sep=" + "), "+ e")
+eqn 
+#looking at the equation based on the model fit
+```
 
+```{r}
+Y = 0.47 + (-0.16 * 20) + (0.31 * 30) + (-0.01 * 20^2) + -2.45  + (-0.01)
+#treatment = 20, temp = 30
+Y
+10^Y
 
-
-
-
-
-
+```
 
