@@ -1,0 +1,198 @@
+---
+title: "WQ 10 & 50 Only"
+author: "Anna Radchenko"
+date: "April 13, 2020"
+output: html_document
+---
+
+```{r}
+# setup the R enviornment for kniting markdown doc properly
+library(knitr)
+opts_knit$set(root.dir='../')
+```
+
+```{r}
+WQ <- read.csv("~/Theses Pieces/Tank Pad Pilot Study/WQ 10 and 50 only.csv")
+```
+
+
+```{r}
+library(ggplot2)
+library(GGally)
+library(gridExtra)
+library(scatterplot3d)
+library(MASS)
+library(lubridate)
+library(lme4)
+library(nlme)
+library(vegan)
+class(WQ$Date)
+```
+
+
+```{r}
+WQ$Time <- factor(WQ$Time, levels = c("Pre", "Post")) #making sure pre always comes before post on figures
+WQ$Chl.a1 <- log(WQ$Chl.a)
+#transforming chlorophyll data since it is not normal
+```
+
+```{r}
+WQ$Date <- as.Date(WQ$Date, "%m.%d.%y")
+class(WQ$Date)
+WQ$Date
+#changing class, so that R understands these are dates
+```
+
+
+```{r}
+sim_mod <- lm(Chl.a1 ~ Tank + Treatment + I(Treatment^2) + Tank:Treatment +
+                  Tank:I(Treatment^2), 
+              data = WQ)
+sub_mod <- update(sim_mod, . ~ . - Tank - Tank:Treatment - Tank:I(Treatment^2))
+main_mod <- lm(Chl.a1 ~ Treatment + I(Treatment^2), data = WQ)
+summary(sim_mod)
+plot(sim_mod)
+
+xrange <- seq(min(WQ$Treatment), max(WQ$Treatment), length.out = 100)
+
+tanks <- levels(WQ$Tank)
+plot(Chl.a1 ~ Treatment, data = WQ, ylim = c(0, 4),xlab = 'Volume Ozonated (%)', ylab = 'log(Chlorophyll Concentration (ug/L))')
+
+lines(predict(sub_mod, newdata = 
+                  data.frame(
+                        Treatment = xrange,
+                        Temp = mean(WQ$Temp))),
+      lwd = 2)
+lines(predict(main_mod, newdata = 
+                  data.frame(
+                      Treatment = xrange)), col='purple', lwd=4)
+
+avg_pred <- predict(sim_mod, newdata = 
+                     data.frame(Tank = rep(tanks, each = 100),
+                               Treatment = rep(xrange,
+                                               times = 3),
+                               Temp = mean(WQ$Temp)))
+avg_pred <- tapply(avg_pred, list(rep(xrange, times = 3)), mean)
+
+lines(xrange, avg_pred, lty = 2, lwd=3)
+
+# obs vs predicted plot
+
+pred <- predict(sim_mod)
+
+plot(WQ$Chl.a1, pred)
+abline(a=0, b=1)
+
+avg_obs <- tapply(WQ$Chl.a1, list(WQ$Treatment), mean)
+avg_pred <- tapply(pred, list(WQ$Treatment), mean) 
+
+plot(avg_obs, avg_pred)
+abline(a=0, b=1)
+```
+
+
+```{r}
+sim_mod <- lm(Chl.a ~ Tank + Treatment + I(Treatment^2) + Tank:Treatment +
+                  Tank:I(Treatment^2), 
+              data = WQ)
+sub_mod <- update(sim_mod, . ~ . - Tank - Tank:Treatment - Tank:I(Treatment^2))
+main_mod <- lm(Chl.a ~ Treatment + I(Treatment^2), data = WQ)
+summary(sim_mod)
+plot(sim_mod)
+
+xrange <- seq(min(WQ$Treatment), max(WQ$Treatment), length.out = 100)
+
+tanks <- levels(WQ$Tank)
+plot(Chl.a ~ Treatment, data = WQ, ylim = c(0, 10))
+for(i in seq_along(tanks)) {
+    lines(xrange, 
+          predict(sim_mod, newdata = 
+                     data.frame(Tank = tanks[i],
+                               Treatment = xrange,
+                               Temp = mean(WQ$Temp))),
+          col = i+1)
+}
+lines(predict(sub_mod, newdata = 
+                  data.frame(
+                        Treatment = xrange,
+                        Temp = mean(WQ$Temp))),
+      lwd = 2)
+lines(predict(main_mod, newdata = 
+                  data.frame(
+                      Treatment = xrange)), col='purple', lwd=4)
+
+avg_pred <- predict(sim_mod, newdata = 
+                     data.frame(Tank = rep(tanks, each = 100),
+                               Treatment = rep(xrange,
+                                               times = 3),
+                               Temp = mean(WQ$Temp)))
+avg_pred <- tapply(avg_pred, list(rep(xrange, times = 3)), mean)
+
+lines(xrange, avg_pred, lty = 2, lwd=3)
+
+# obs vs predicted plot
+
+pred <- predict(sim_mod)
+
+plot(WQ$Chl.a1, pred)
+abline(a=0, b=1)
+
+avg_obs <- tapply(WQ$Chl.a, list(WQ$Treatment), mean)
+avg_pred <- tapply(pred, list(WQ$Treatment), mean) 
+
+plot(avg_obs, avg_pred)
+abline(a=0, b=1)
+```
+
+```{r}
+sim_mod <- lm(Chl.a ~ Tank + Treatment + I(Treatment^2) + Tank:Treatment +
+                  Tank:I(Treatment^2), 
+              data = WQ)
+sub_mod <- update(sim_mod, . ~ . - Tank - Tank:Treatment - Tank:I(Treatment^2))
+main_mod <- lm(Chl.a ~ Treatment + I(Treatment^2), data = WQ)
+summary(sim_mod)
+plot(sim_mod)
+
+xrange <- seq(min(WQ$Treatment), max(WQ$Treatment), length.out = 100)
+
+tanks <- levels(WQ$Tank)
+plot(Chl.a ~ Treatment, data = WQ, ylim = c(0, 10), xlab = 'Volume Ozonated (%)', ylab = 'Chlorophyll Concentration (ug/L)')
+
+lines(predict(sub_mod, newdata = 
+                  data.frame(
+                        Treatment = xrange,
+                        Temp = mean(WQ$Temp))),
+      lwd = 2)
+lines(predict(main_mod, newdata = 
+                  data.frame(
+                      Treatment = xrange)), col='purple', lwd=4)
+
+avg_pred <- predict(sim_mod, newdata = 
+                     data.frame(Tank = rep(tanks, each = 100),
+                               Treatment = rep(xrange,
+                                               times = 3),
+                               Temp = mean(WQ$Temp)))
+avg_pred <- tapply(avg_pred, list(rep(xrange, times = 3)), mean)
+
+lines(xrange, avg_pred, lty = 2, lwd=3)
+
+# obs vs predicted plot
+
+pred <- predict(sim_mod)
+
+plot(WQ$Chl.a1, pred)
+abline(a=0, b=1)
+
+avg_obs <- tapply(WQ$Chl.a, list(WQ$Treatment), mean)
+avg_pred <- tapply(pred, list(WQ$Treatment), mean) 
+
+plot(avg_obs, avg_pred)
+abline(a=0, b=1)
+```
+
+
+
+
+
+
+
