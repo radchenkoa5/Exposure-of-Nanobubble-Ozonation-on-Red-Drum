@@ -1,0 +1,29 @@
+---
+title: "Linear Model Chlorophyll a analysis with pre as 0 treatment"
+author: "Anna Radchenko"
+date: "April 14, 2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+# setup the R enviornment for kniting markdown doc properly
+library(knitr)
+opts_knit$set(root.dir='../')
+```
+
+```{r}
+chlwq1 <- read.csv("./Data/ChlaWQReplicateAcuteData2.csv")
+```
+
+```{r}
+library(ggplot2)
+library(GGally)
+library(gridExtra)
+library(scatterplot3d)
+library(MASS)
+library(lubridate)
+library(lme4)
+library(nlme)
+library(vegan)
+class(chlwq$Date)
+```
