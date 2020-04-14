@@ -43,11 +43,20 @@ WQ$Date
 #changing class, so that R understands these are dates
 ```
 
+```{r}
+mod1 <- lm(Chl.a1 ~ Tank + Treatment + Temp + 
+                  Temp:Treatment + Time, 
+              data = WQ)
+summary(mod1)
+```
+
+
+
 
 ```{r}
-sim_mod <- lm(Chl.a1 ~ Tank + Treatment + Tank:Treatment, 
+sim_mod <- lm(Chl.a1 ~ Tank + Treatment + Temp + Temp:Treatment, 
               data = WQ)
-sub_mod <- update(sim_mod, . ~ . - Tank - Tank:Treatment)
+sub_mod <- update(sim_mod, . ~ . - Tank)
 main_mod <- lm(Chl.a1 ~ Treatment, data = WQ)
 summary(sim_mod)
 plot(sim_mod)
@@ -93,9 +102,9 @@ shapiro.test(residuals(sim_mod))
 
 
 ```{r}
-sim_mod <- lm(Chl.a ~ Tank + Treatment + Tank:Treatment, 
+sim_mod <- lm(Chl.a ~ Tank + Treatment + Temp + Temp:Treatment, 
               data = WQ)
-sub_mod <- update(sim_mod, . ~ . - Tank - Tank:Treatment)
+sub_mod <- update(sim_mod, . ~ . - Tank)
 main_mod <- lm(Chl.a ~ Treatment, data = WQ)
 summary(sim_mod)
 plot(sim_mod)
