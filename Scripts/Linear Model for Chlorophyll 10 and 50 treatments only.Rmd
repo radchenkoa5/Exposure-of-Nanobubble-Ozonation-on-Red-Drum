@@ -45,11 +45,10 @@ WQ$Date
 
 
 ```{r}
-sim_mod <- lm(Chl.a1 ~ Tank + Treatment + I(Treatment^2) + Tank:Treatment +
-                  Tank:I(Treatment^2), 
+sim_mod <- lm(Chl.a1 ~ Tank + Treatment + Tank:Treatment, 
               data = WQ)
-sub_mod <- update(sim_mod, . ~ . - Tank - Tank:Treatment - Tank:I(Treatment^2))
-main_mod <- lm(Chl.a1 ~ Treatment + I(Treatment^2), data = WQ)
+sub_mod <- update(sim_mod, . ~ . - Tank - Tank:Treatment)
+main_mod <- lm(Chl.a1 ~ Treatment, data = WQ)
 summary(sim_mod)
 plot(sim_mod)
 
@@ -88,15 +87,16 @@ avg_pred <- tapply(pred, list(WQ$Treatment), mean)
 
 plot(avg_obs, avg_pred)
 abline(a=0, b=1)
+
+shapiro.test(residuals(sim_mod))
 ```
 
 
 ```{r}
-sim_mod <- lm(Chl.a ~ Tank + Treatment + I(Treatment^2) + Tank:Treatment +
-                  Tank:I(Treatment^2), 
+sim_mod <- lm(Chl.a ~ Tank + Treatment + Tank:Treatment, 
               data = WQ)
-sub_mod <- update(sim_mod, . ~ . - Tank - Tank:Treatment - Tank:I(Treatment^2))
-main_mod <- lm(Chl.a ~ Treatment + I(Treatment^2), data = WQ)
+sub_mod <- update(sim_mod, . ~ . - Tank - Tank:Treatment)
+main_mod <- lm(Chl.a ~ Treatment, data = WQ)
 summary(sim_mod)
 plot(sim_mod)
 
@@ -142,14 +142,14 @@ avg_pred <- tapply(pred, list(WQ$Treatment), mean)
 
 plot(avg_obs, avg_pred)
 abline(a=0, b=1)
+shapiro.test(residuals(sim_mod))
 ```
 
 ```{r}
-sim_mod <- lm(Chl.a ~ Tank + Treatment + I(Treatment^2) + Tank:Treatment +
-                  Tank:I(Treatment^2), 
+sim_mod <- lm(Chl.a ~ Tank + Treatment  + Tank:Treatment, 
               data = WQ)
-sub_mod <- update(sim_mod, . ~ . - Tank - Tank:Treatment - Tank:I(Treatment^2))
-main_mod <- lm(Chl.a ~ Treatment + I(Treatment^2), data = WQ)
+sub_mod <- update(sim_mod, . ~ . - Tank - Tank:Treatment)
+main_mod <- lm(Chl.a ~ Treatment, data = WQ)
 summary(sim_mod)
 plot(sim_mod)
 
