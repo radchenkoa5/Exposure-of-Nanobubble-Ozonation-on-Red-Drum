@@ -2,3 +2,261 @@
 library(knitr)
 opts_knit$set(root.dir='../')
 chlwq <- read.csv("./Data/ChlaWQReplicateAcuteData2.csv")
+
+#Looking for trends within the data 
+ggplot(chlwq2, aes(Treatment, Chl.a1)) +
+  geom_point(aes(col=Date))
+facet_wrap(~Tank)
+
+ggplot(chlwq2, aes(Temp, Chl.a1)) +
+  geom_point(aes(col=Date)) +
+  facet_wrap(~Tank)
+
+ggplot(chlwq2, aes(Time, Chl.a1)) +
+  geom_point(aes(col=Date)) +
+  facet_wrap(~Tank)
+
+#predict values based on the model and compare them to actual to see how well the model predicts data, compare the two
+#Looking at the data untransformed 
+
+sim_mod <- lm(Chl.a ~ Treatment + Temp + Tank + Tank:Treatment + Temp:Treatment, data = chlwq2)
+sub_mod <- update(sim_mod, . ~ . - Tank - Tank:Treatment)
+main_mod <- lm(Chl.a ~ Treatment , data = chlwq2)
+summary(sim_mod)
+plot(sim_mod)
+
+xrange <- seq(min(chlwq2$Treatment), max(chlwq2$Treatment), length.out = 100)
+
+
+tanks <- levels(chlwq2$Tank)
+plot(Chl.a ~ Treatment, data = chlwq2, ylim = c(0, 15), xlab = 'Volume Ozonated (%)', ylab = 'Chlorophyll a concentration (ug/L)')
+for(i in seq_along(tanks)) {
+  lines(xrange, 
+        predict(sim_mod, newdata = 
+                  data.frame(Tank = tanks[i],
+                             Treatment = xrange,
+                             Temp = mean(chlwq2$Temp))),
+        col = i+1)
+}
+lines(predict(sub_mod, newdata = 
+                data.frame(
+                  Treatment = xrange,
+                  Temp = mean(chlwq2$Temp))),
+      lwd = 2)
+lines(predict(main_mod, newdata = 
+                data.frame(
+                  Treatment = xrange)), col='purple', lwd=4)
+
+avg_pred <- predict(sim_mod, newdata = 
+                      data.frame(Tank = rep(tanks, each = 100),
+                                 Treatment = rep(xrange,
+                                                 times = 3),
+                                 Temp = mean(chlwq2$Temp)))
+avg_pred <- tapply(avg_pred, list(rep(xrange, times = 3)), mean)
+
+lines(xrange, avg_pred, lty = 2, lwd=3)
+
+# obs vs predicted plot
+
+pred <- predict(sim_mod)
+
+plot(chlwq2$Chl.a, pred)
+abline(a=0, b=1)
+
+avg_obs <- tapply(chlwq2$Chl.a, list(chlwq2$Treatment), mean)
+avg_pred <- tapply(pred, list(chlwq2$Treatment), mean) 
+
+plot(avg_obs, avg_pred)
+abline(a=0, b=1)
+
+
+#Figure without tank line elements
+sim_mod <- lm(Chl.a1 ~ Treatment + Temp + Tank + Treatment:Temp + 
+                Treatment:Tank, data = chlwq)
+sub_mod <- update(sim_mod, . ~ . - Tank - Tank:Treatment)
+main_mod <- lm(Chl.a1 ~ Treatment , data = chlwq2)
+summary(sim_mod)
+
+
+xrange <- seq(min(chlwq2$Treatment), max(chlwq2$Treatment), length.out = 100)
+
+
+tanks <- levels(chlwq2$Tank)
+plot(Chl.a1 ~ Treatment, data = chlwq2, ylim = c(0, 4), xlab = 'Volume Ozonated (%)', ylab = 'Chlorophyll a concentration (ug/L)')
+for(i in seq_along(tanks)) {
+  lines(xrange, 
+        predict(sim_mod, newdata = 
+                  data.frame(Tank = tanks[i],
+                             Treatment = xrange,
+                             Temp = mean(chlwq2$Temp))),
+        col = i+1)
+}
+lines(predict(sub_mod, newdata = 
+                data.frame(
+                  Treatment = xrange,
+                  Temp = mean(chlwq2$Temp))),
+      lwd = 2)
+lines(predict(main_mod, newdata = 
+                data.frame(
+                  Treatment = xrange)), col='purple', lwd=4)
+
+avg_pred <- predict(sim_mod, newdata = 
+                      data.frame(Tank = rep(tanks, each = 100),
+                                 Treatment = rep(xrange,
+                                                 times = 3),
+                                 Temp = mean(chlwq2$Temp)))
+avg_pred <- tapply(avg_pred, list(rep(xrange, times = 3)), mean)
+
+lines(xrange, avg_pred, lty = 2, lwd=3)
+
+
+#Now recreating this graph with transformed chlorophyll a data
+#predict values based on the model and compare them to actual to see how well the model predicts data, compare the two
+
+sim_mod <- lm(Chl.a1 ~ Treatment + Temp + Tank + Tank:Treatment + 
+                Temp:Treatment, data = chlwq2)
+sub_mod <- update(sim_mod, . ~ . - Tank - Tank:Treatment)
+main_mod <- lm(Chl.a1 ~ Treatment , data = chlwq2)
+summary(sim_mod)
+
+xrange <- seq(min(chlwq2$Treatment), max(chlwq2$Treatment), length.out = 100)
+
+
+tanks <- levels(chlwq2$Tank)
+plot(Chl.a1 ~ Treatment, data = chlwq2, ylim = c(0, 4), xlab = 'Volume Ozonated (%)', ylab = 'log(Chlorophyll a concentration (ug/L)')
+
+lines(predict(sub_mod, newdata = 
+                data.frame(
+                  Treatment = xrange,
+                  Temp = mean(chlwq2$Temp))),
+      lwd = 2)
+lines(predict(main_mod, newdata = 
+                data.frame(
+                  Treatment = xrange)), col='purple', lwd=4)
+
+avg_pred <- predict(sim_mod, newdata = 
+                      data.frame(Tank = rep(tanks, each = 100),
+                                 Treatment = rep(xrange,
+                                                 times = 3),
+                                 Temp = mean(chlwq2$Temp)))
+
+avg_pred <- tapply(avg_pred, list(rep(xrange, times = 3)), mean)
+
+lines(xrange, avg_pred, lty = 2, lwd=3)
+
+legend('top', legend=c("Full Model Without Tank Effect","Treatment Only Model", "Full Model"),
+       col=c("black","purple", "black"), lty=1:3, cex=0.8,
+       title="Line types", text.font=4, bg='lightblue')
+
+
+Change <- read.csv("./Data/PercentChlaChange.csv")
+
+#Exploring the percent change in chlorophyll a data
+ggplot(Change, aes(Treatment, Pchlchange)) +
+  geom_point(aes(col=Temp))
+facet_wrap(~Tank)
+
+ggplot(Change, aes(Temp, Pchlchange)) +
+  geom_point(aes(col=Treatment)) 
+
+
+ggplot(Change, aes(Treatment, Pchlchange), xl) +
+  geom_point(aes(col=Salinity)) 
+
+
+
+
+
+
+#predict values based on the model and compare them to actual to see how well the model predicts data, compare the two
+#Looking at the percent change in chlorophyll a now
+sim_mod <- lm(Pchlchange ~ Treatment + Temp + Salinity + Tank + 
+                Treatment:Temp, data = Change)
+sub_mod <- update(sim_mod, . ~ . - Tank)
+main_mod <- lm(Pchlchange ~ Treatment , data = Change)
+summary(sim_mod)
+plot(sim_mod)
+
+xrange <- seq(min(Change$Treatment), max(Change$Treatment), length.out = 100)
+srange <- seq(min(Change$Salinity), max(Change$Salinity), length.out = 100)
+
+tanks <- levels(Change$Tank)
+plot(Pchlchange ~ Treatment, data = Change, ylim = c(-80, 30))
+for(i in seq_along(tanks)) {
+  lines(xrange, 
+        predict(sim_mod, newdata = 
+                  data.frame(Tank = tanks[i],
+                             Treatment = xrange,
+                             Temp = mean(Change$Temp), Salinity = srange)),
+        col = i+1)
+}
+lines(predict(sub_mod, newdata = 
+                data.frame(
+                  Treatment = xrange,
+                  Temp = mean(Change$Temp), Salinity = srange)),
+      lwd = 2)
+lines(predict(main_mod, newdata = 
+                data.frame(
+                  Treatment = xrange)), col='purple', lwd=4)
+
+avg_pred <- predict(sim_mod, newdata = 
+                      data.frame(Tank = rep(tanks, each = 100),
+                                 Treatment = rep(xrange,
+                                                 times = 3),
+                                 Temp = mean(Change$Temp), Salinity = srange))
+avg_pred <- tapply(avg_pred, list(rep(xrange, times = 3)), mean)
+
+lines(xrange, avg_pred, lty = 2, lwd=3)
+
+# obs vs predicted plot
+
+pred <- predict(sim_mod)
+
+plot(Change$Pchlchange, pred)
+abline(a=0, b=1)
+
+avg_obs <- tapply(Change$Pchlchange, list(Change$Treatment), mean)
+avg_pred <- tapply(pred, list(Change$Treatment), mean) 
+
+plot(avg_obs, avg_pred)
+abline(a=0, b=1)
+
+
+#Removing all individual tank lines on the same figure
+
+sim_mod <- lm(Pchlchange ~ Treatment + Temp + Salinity + Tank + 
+                Treatment:Temp, data = Change)
+sub_mod <- update(sim_mod, . ~ . - Tank)
+main_mod <- lm(Pchlchange ~ Treatment , data = Change)
+summary(sim_mod)
+
+
+xrange <- seq(min(Change$Treatment), max(Change$Treatment), length.out = 100)
+srange <- seq(min(Change$Salinity), max(Change$Salinity), length.out = 100)
+
+tanks <- levels(Change$Tank)
+plot(Pchlchange ~ Treatment, data = Change, ylim = c(-80, 30), xlab = 'Volume Ozonated (%)', ylab = 'Mean Change in Chlorophyll a (%)')
+
+lines(predict(sub_mod, newdata = 
+                data.frame(
+                  Treatment = xrange,
+                  Temp = mean(Change$Temp), Salinity = srange)),
+      lwd = 2)
+lines(predict(main_mod, newdata = 
+                data.frame(
+                  Treatment = xrange)), col='purple', lwd=4)
+
+avg_pred <- predict(sim_mod, newdata = 
+                      data.frame(Tank = rep(tanks, each = 100),
+                                 Treatment = rep(xrange,
+                                                 times = 3),
+                                 Temp = mean(Change$Temp), Salinity = srange))
+avg_pred <- tapply(avg_pred, list(rep(xrange, times = 3)), mean)
+
+lines(xrange, avg_pred, lty = 2, lwd=3)
+
+legend('top', legend=c("Full Model Without Tank Effect","Treatment Only Model", "Full Model"),
+       col=c("black","purple", "black"), lty=1:3, cex=0.8,
+       title="Line types", text.font=4, bg='lightblue')
+
+#Model does not visually fit data as a percent change as well as it does the transformed chlorophyll a data
