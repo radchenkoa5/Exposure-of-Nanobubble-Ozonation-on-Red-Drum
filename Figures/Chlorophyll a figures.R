@@ -260,3 +260,17 @@ legend('top', legend=c("Full Model Without Tank Effect","Treatment Only Model", 
        title="Line types", text.font=4, bg='lightblue')
 
 #Model does not visually fit data as a percent change as well as it does the transformed chlorophyll a data
+
+#Looking at the interaction of two improtant factors in predicting percent chlorophyll change
+
+ggplot(Change, aes(Treatment, Pchlchange)) +
+  geom_point(aes(col=Temp))
+facet_wrap(~Tank)
+
+ggplot(Change, aes(Temp, Pchlchange)) +
+  geom_point(aes(col=Treatment)) 
+
+
+ggplot(Change, aes(Treatment, Pchlchange), xl) +
+  geom_point(aes(col=Salinity)) 
+
