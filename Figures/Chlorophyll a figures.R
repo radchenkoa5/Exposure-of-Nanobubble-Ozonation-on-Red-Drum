@@ -264,13 +264,14 @@ legend('top', legend=c("Full Model Without Tank Effect","Treatment Only Model", 
 #Looking at the interaction of two improtant factors in predicting percent chlorophyll change
 
 ggplot(Change, aes(Treatment, Pchlchange)) +
-  geom_point(aes(col=Temp))
-facet_wrap(~Tank)
+  geom_point(aes(col=Temp)) +
+  labs(x = 'Volume Ozonated (%)', y = 'Change in Chlorophyll a Concentration (%)')
 
 ggplot(Change, aes(Temp, Pchlchange)) +
-  geom_point(aes(col=Treatment)) 
-
+  geom_point(aes(col=Treatment)) +
+  labs(x = 'Temperature (C)', y = 'Change in Chlorophyll a Concentration (%)')
 
 ggplot(Change, aes(Treatment, Pchlchange), xl) +
-  geom_point(aes(col=Salinity)) 
+  geom_point(aes(col=Salinity)) +
+  labs(x = 'Volume Ozonated (%)', y = 'Change in Chlorophyll a Concentration (%)')
 
