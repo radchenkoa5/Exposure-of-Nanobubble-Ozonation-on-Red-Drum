@@ -22,7 +22,7 @@ library(nlme)
 library(vegan)
 
 
-class(chlwq1$Date)
+class(chlwq2$Date)
 chlwq2$Time <- factor(chlwq2$Time, levels = c("Pre", "Post")) #making sure pre always comes before post on figures
 chlwq2$Chl.a1 <- log(chlwq2$Chl.a)
 #transforming chlorophyll data since it is not normal
@@ -221,7 +221,8 @@ avg_pred <- tapply(pred, list(Change$Treatment), mean)
 plot(avg_obs, avg_pred)
 abline(a=0, b=1)
 
-
+acf(chlwq2$Chl.a) #looking for autocorrelation
+#appear to have weak autocorrelation, only a few points outside of the 95% confidence interval
 
 
 
