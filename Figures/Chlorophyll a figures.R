@@ -1,7 +1,17 @@
 # setup the R enviornment for kniting markdown doc properly
 library(knitr)
 opts_knit$set(root.dir='../')
-chlwq <- read.csv("./Data/ChlaWQReplicateAcuteData2.csv")
+chlwq2 <- read.csv("./Data/ChlaWQReplicateAcuteData2.csv")
+
+library(ggplot2)
+library(GGally)
+library(gridExtra)
+library(scatterplot3d)
+library(MASS)
+library(lubridate)
+library(lme4)
+library(nlme)
+library(vegan)
 
 #Looking for trends within the data 
 ggplot(chlwq2, aes(Treatment, Chl.a1)) +
