@@ -1,10 +1,8 @@
 
-
-```{r setup, include=FALSE}
 # setup the R enviornment for kniting markdown doc properly
 library(knitr)
 opts_knit$set(root.dir='../')
-```
+
 
 
 chlwq2 <- read.csv("./Data/ChlaWQReplicateAcuteData2.csv")
