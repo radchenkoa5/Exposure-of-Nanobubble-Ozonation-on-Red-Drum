@@ -138,7 +138,9 @@ sim_mod <- lm(Chl.a1 ~ Treatment + Temp + Tank + Tank:Treatment +
 sub_mod <- update(sim_mod, . ~ . - Tank - Tank:Treatment)
 main_mod <- lm(Chl.a1 ~ Treatment , data = chlwq2)
 summary(sim_mod)
-
+modsum <- summary(sim_mod)
+r2 <- modsum$adj.r.squared
+p <- 'p = 2.585e-11'
 
 xrange <- seq(min(chlwq2$Treatment), max(chlwq2$Treatment), length.out = 100)
 
@@ -158,6 +160,7 @@ lines(xrange, avg_pred, lty = 2, lwd=3)
 mylabel = bquote(italic(R)^2 == .(format(r2, digits = 3)))
 text(x = 47, y = 4, labels = mylabel)
 text(x = 47, y = 3.7, labels = p)
+
 
 
 Change <- read.csv("./Data/PercentChlaChange.csv")
